@@ -10,6 +10,18 @@ setup-tools:
 go-run:
 	cd go;go run main.go
 
+env:
+	cd python;python3 -m venv env
+
+venv: env
+	cd python;. env/bin/activate
+
+python-run: venv
+	cd python;python main.py
+
+clean:
+	cd python;rm -rf env
+
 ##### scaffing
 
 ADR_COUNT:=$(shell find docs/ADR -type f | wc -l | tr -d ' ') 
