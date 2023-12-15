@@ -17,7 +17,7 @@ venv: env
 	cd python;. env/bin/activate
 
 python-run: venv
-	cd python;python main.py
+	cd python;pip install -r requirements.txt;python3 main.py
 
 clean:
 	cd python;rm -rf env
