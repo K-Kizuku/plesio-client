@@ -19,7 +19,7 @@ venv: env
 python-run: venv
 	cd python;pip install -r requirements.txt;python3 main.py
 
-clean:
+clean-env:
 	cd python;rm -rf env
 
 ##### scaffing
