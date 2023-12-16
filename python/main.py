@@ -46,7 +46,7 @@ async def send_audio(room_id: str):
             "type": "audio",
             "header": {
                 "room_id": room_id,
-                "want_client_id": "String",
+                "want_client_id": "",
             },
             "body": {
                 "content": base64_data
@@ -64,7 +64,7 @@ async def udp_sender(data, address,room_id: str):
                 "type": "AA",
                 "header": {
                     "room_id": room_id,
-                    "want_client_id": "String",
+                    "want_client_id": "",
                 },
                 "body": {
                     "content":base64_data
@@ -78,7 +78,9 @@ def create_room(address):
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     json_data = {
                 "type": "create_room",
-                "header": {},
+                "header": {
+                    "room_id": ""
+                },
                 "body": {
                     "content":""
                 }
