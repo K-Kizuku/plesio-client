@@ -38,14 +38,14 @@ target_address = ('127.0.0.1', 12345)
 
 count = 0
 
-async def send_audio():
+async def send_audio(room_id: str):
     while True:
         data = stream.read(CHUNK_SIZE, exception_on_overflow=False)
         base64_data = base64.b64encode(data).decode('utf-8')
         json_data = {
             "type": "audio",
             "header": {
-                "room_id": "String",
+                "room_id": room_id,
                 "want_client_id": "String",
             },
             "body": {
@@ -57,13 +57,13 @@ async def send_audio():
         socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
         await asyncio.sleep(0.01)
 
-async def udp_sender(data, address):
+async def udp_sender(data, address,room_id: str):
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     base64_data = data
     json_data = {
                 "type": "AA",
                 "header": {
-                    "room_id": "String",
+                    "room_id": room_id,
                     "want_client_id": "String",
                 },
                 "body": {
@@ -100,7 +100,7 @@ def create_room(address):
         else:
             print("Failed room create!")
 
-def join_room(room_id, address):
+def join_room(room_id:str, address):
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     json_data = {
                 "type": "join_room",
@@ -115,7 +115,7 @@ def join_room(room_id, address):
     json_bytes = json_str.encode('utf-8')
     udp_socket.sendto(json_bytes, address)
 
-def exit_room(room_id, address):
+def exit_room(room_id:str, address):
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     json_data = {
                 "type": "join_room",
@@ -205,7 +205,7 @@ async def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    asyncio.create_task(send_audio())
+    asyncio.create_task(send_audio(room_id=ROOM_ID))
     asyncio.create_task(receive_data())
 
 try:
@@ -219,7 +219,7 @@ try:
         json_data = {
             "type": "audio",
             "header": {
-                "room_id": "String",
+                "room_id": ROOM_ID,
                 "want_client_id": "String",
             },
             "body": {
@@ -248,7 +248,7 @@ try:
             os.system('clear')
         print("\033[{}A{}".format(h - 5, output), end="")
 
-        threading.Thread(target=udp_sender, args=(output, target_address)).start()
+        threading.Thread(target=udp_sender, args=(output, target_address,ROOM_ID)).start()
 except KeyboardInterrupt:
     pass
 finally:
