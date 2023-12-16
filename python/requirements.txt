@@ -1,5 +1,6 @@
 cffi==1.16.0
 numpy==1.24.4
 opencv-contrib-python==4.8.1.78
+PyAudio==0.2.14
 pycparser==2.21
 sounddevice==0.4.6
