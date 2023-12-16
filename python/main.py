@@ -17,8 +17,12 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 def get_terminal_size() -> Tuple[int, int]:
-    rows, cols = map(int, os.popen('stty size', 'r').read().split())
-    return rows, cols
+    # rows, cols = map(int, os.popen('stty size', 'r').read().split())
+    size = os.get_terminal_size()
+    lines = size.lines
+    columns = size.columns
+
+    return lines, columns
 
 def main():
     signal.signal(signal.SIGTERM, signal_handler)
