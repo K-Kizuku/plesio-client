@@ -4,7 +4,6 @@ import socket
 from typing import Tuple
 
 import cv2
-import numpy as np
 import os
 import signal
 import sys
@@ -16,22 +15,20 @@ import base64
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 44100
-CHUNK_SIZE = 256
+RATE = 4410
+CHUNK_SIZE = 512
 
-DEST_IP = "127.0.0.1"  # Change to the intended destination IP
+DEST_IP = "127.0.0.1"
 DEST_PORT = 12345 
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Initialize PyAudio
 audio_interface = pyaudio.PyAudio()
 stream = audio_interface.open(format=FORMAT, channels=CHANNELS,
                               rate=RATE, input=True,
                               frames_per_buffer=CHUNK_SIZE)
 
 print("Sending audio to {}:{}".format(DEST_IP, DEST_PORT))
-
 
 def signal_handler(signum: int, frame) -> None:
     sys.exit(0)
@@ -50,7 +47,7 @@ def get_terminal_size() -> Tuple[int, int]:
 
 def udp_sender(data, address):
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    base64_data = base64.b64encode(data).decode('utf-8')
+    base64_data = data
     json_data = {
                 "type": "AA",
                 "header": {
@@ -63,13 +60,7 @@ def udp_sender(data, address):
             }
     json_str = json.dumps(json_data)
     json_bytes = json_str.encode('utf-8')
-    message = udp_socket.sendto(json_bytes, address)
-    print(message)
-
-def audio_callback(indata, frames, time, status):
-    if status:
-        print(status, file=sys.stderr)
-    udp_sender(indata.tobytes(), target_address)
+    udp_socket.sendto(json_bytes, address)
 
 
 def main():
@@ -119,7 +110,7 @@ def main():
             os.system('clear')
         print("\033[{}A{}".format(h - 5, output), end="")
 
-        threading.Thread(target=udp_sender, args=(output.encode(), target_address)).start()
+        threading.Thread(target=udp_sender, args=(output, target_address)).start()
 
 if __name__ == "__main__":
     try:
