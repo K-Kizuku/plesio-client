@@ -19,6 +19,9 @@ venv: env
 python-run: venv
 	cd python;pip install -r requirements.txt;python3 main.py
 
+python-run-udp: venv
+	cd python;pip install -r requirements.txt;python3 udp.py
+
 clean-env:
 	cd python;rm -rf env
 
