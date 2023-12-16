@@ -19,6 +19,8 @@ CHUNK_SIZE = 512
 DEST_IP = "127.0.0.1"
 DEST_PORT = 12345
 
+ROOM_ID = ""
+
 audio_interface = pyaudio.PyAudio()
 socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -72,6 +74,68 @@ async def udp_sender(data, address):
     json_bytes = json_str.encode('utf-8')
     udp_socket.sendto(json_bytes, address)
 
+def create_room(address):
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    json_data = {
+                "type": "create_room",
+                "header": {},
+                "body": {
+                    "content":""
+                }
+            }
+    json_str = json.dumps(json_data)
+    json_bytes = json_str.encode('utf-8')
+    udp_socket.sendto(json_bytes, address)
+
+    data, addr = socket.recvfrom(65535)
+    try:
+        json_data = json.loads(data.decode('utf-8'))
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        print(data)
+    if 'type' in json_data:
+        message_type = json_data['type']
+        if message_type == "create_room":
+            print(json_data["body"]["room_id"])
+        else:
+            print("Failed room create!")
+
+def join_room(room_id, address):
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    json_data = {
+                "type": "join_room",
+                "header": {
+                    "room_id": room_id
+                },
+                "body": {
+                    "content":""
+                }
+            }
+    json_str = json.dumps(json_data)
+    json_bytes = json_str.encode('utf-8')
+    udp_socket.sendto(json_bytes, address)
+
+def exit_room(room_id, address):
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    json_data = {
+                "type": "join_room",
+                "header": {
+                    "room_id": room_id
+                },
+                "body": {
+                    "content":""
+                }
+            }
+    json_str = json.dumps(json_data)
+    json_bytes = json_str.encode('utf-8')
+    udp_socket.sendto(json_bytes, address)
+
+def display_help():
+    print("Usage: python main.py [--create] [--join <arg>]")
+    print("--create : Create Room.")
+    print("--join   : Join room.")
+    print("           Example: python main.py --join hoge")
+
 async def receive_data():
     count = 0
     while True:
@@ -109,6 +173,21 @@ def get_terminal_size() -> Tuple[int, int]:
     return rows, cols
 
 async def main():
+    args = sys.argv[1:]
+
+    if "--create" in args:
+        create_room(address=target_address)
+        return
+    elif "--join" in args and len(args) > 1:
+        global ROOM_ID
+        index = args.index("--join")
+        arg = args[index + 1]
+        ROOM_ID = arg
+        join_room(room_id=ROOM_ID,address=target_address)
+    else:
+        display_help()
+        return
+
     global stream, cap
 
     signal.signal(signal.SIGTERM, signal_handler)
@@ -174,6 +253,7 @@ except KeyboardInterrupt:
     pass
 finally:
     print("Exit")
+    exit_room(room_id=ROOM_ID,address=target_address)
     cap.release()
     sd.stop()
     print("Closing stream and socket.")
