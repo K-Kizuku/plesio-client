@@ -16,13 +16,13 @@ CHANNELS = 1
 RATE = 4410
 CHUNK_SIZE = 512
 
-DEST_IP = "127.0.0.1"
-DEST_PORT = 12345
+DEST_IP = "35.192.191.174"
+DEST_PORT = 8088
 
 ROOM_ID = ""
 
 audio_interface = pyaudio.PyAudio()
-socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+socket1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 stream = audio_interface.open(format=FORMAT, channels=CHANNELS,
                               rate=RATE, input=True,
@@ -34,7 +34,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 colorset: str = "MWNB89RKYUV0JL7kbh1mwngpasexznocv?{}()jftrl!i*=<>~^++--::::;;;;;;\"\"\"\"\"\"''''''''````````````                                     "
-target_address = ('127.0.0.1', 12345)
+target_address = (DEST_IP, DEST_PORT)
 
 count = 0
 
@@ -54,7 +54,7 @@ async def send_audio(room_id: str):
         }
         json_str = json.dumps(json_data)
         json_bytes = json_str.encode('utf-8')
-        socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
+        socket1.sendto(json_bytes, (DEST_IP, DEST_PORT))
         await asyncio.sleep(0.01)
 
 async def udp_sender(data, address,room_id: str):
@@ -89,7 +89,7 @@ def create_room(address):
     json_bytes = json_str.encode('utf-8')
     udp_socket.sendto(json_bytes, address)
 
-    data, addr = socket.recvfrom(65535)
+    data, addr = socket1.recvfrom(65535)
     try:
         json_data = json.loads(data.decode('utf-8'))
     except json.JSONDecodeError as e:
@@ -103,7 +103,7 @@ def create_room(address):
             print("Failed room create!")
 
 def join_room(room_id:str, address):
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_socket = socket1.socket(socket.AF_INET, socket.SOCK_DGRAM)
     json_data = {
                 "type": "join_room",
                 "header": {
@@ -118,7 +118,7 @@ def join_room(room_id:str, address):
     udp_socket.sendto(json_bytes, address)
 
 def exit_room(room_id:str, address):
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_socket = socket1.socket(socket.AF_INET, socket.SOCK_DGRAM)
     json_data = {
                 "type": "join_room",
                 "header": {
@@ -141,7 +141,7 @@ def display_help():
 async def receive_data():
     count = 0
     while True:
-        data, addr = socket.recvfrom(65535)
+        data, addr = socket1.recvfrom(65535)
         try:
             json_data = json.loads(data.decode('utf-8'))
         except json.JSONDecodeError as e:
@@ -173,6 +173,9 @@ def signal_handler(signum: int, frame) -> None:
 def get_terminal_size() -> Tuple[int, int]:
     rows, cols = map(int, os.popen('stty size', 'r').read().split())
     return rows, cols
+
+def run_udp_sender(output, target_address, room_id):
+    asyncio.run(udp_sender(output, target_address, room_id))
 
 async def main():
     args = sys.argv[1:]
@@ -230,7 +233,7 @@ try:
         }
         json_str = json.dumps(json_data)
         json_bytes = json_str.encode('utf-8')
-        socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
+        socket1.sendto(json_bytes, (DEST_IP, DEST_PORT))
 
         if not ret:
             break
@@ -244,13 +247,7 @@ try:
                 output += colorset[pixel // 2] + colorset[pixel // 2]
             output += "\n"
 
-        count += 1
-        if count == 60:
-            count = 0
-            os.system('clear')
-        print("\033[{}A{}".format(h - 5, output), end="")
-
-        threading.Thread(target=udp_sender, args=(output, target_address,ROOM_ID)).start()
+        threading.Thread(target=run_udp_sender, args=(output, target_address, ROOM_ID)).start()
 except KeyboardInterrupt:
     pass
 finally:
@@ -262,8 +259,7 @@ finally:
     stream.stop_stream()
     stream.close()
     audio_interface.terminate()
-    socket.close()
-    socket.close()
+    socket1.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
