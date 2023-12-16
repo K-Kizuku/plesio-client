@@ -20,8 +20,7 @@ DEST_IP = "127.0.0.1"
 DEST_PORT = 12345
 
 audio_interface = pyaudio.PyAudio()
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 stream = audio_interface.open(format=FORMAT, channels=CHANNELS,
                               rate=RATE, input=True,
@@ -53,7 +52,7 @@ async def send_audio():
         }
         json_str = json.dumps(json_data)
         json_bytes = json_str.encode('utf-8')
-        client_socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
+        socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
         await asyncio.sleep(0.01)
 
 async def udp_sender(data, address):
@@ -76,7 +75,7 @@ async def udp_sender(data, address):
 async def receive_data():
     count = 0
     while True:
-        data, addr = server_socket.recvfrom(65535)
+        data, addr = socket.recvfrom(65535)
         try:
             json_data = json.loads(data.decode('utf-8'))
         except json.JSONDecodeError as e:
@@ -150,7 +149,7 @@ try:
         }
         json_str = json.dumps(json_data)
         json_bytes = json_str.encode('utf-8')
-        client_socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
+        socket.sendto(json_bytes, (DEST_IP, DEST_PORT))
 
         if not ret:
             break
@@ -181,8 +180,8 @@ finally:
     stream.stop_stream()
     stream.close()
     audio_interface.terminate()
-    client_socket.close()
-    server_socket.close()
+    socket.close()
+    socket.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
